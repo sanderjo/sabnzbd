@@ -25,6 +25,7 @@ import time
 import datetime
 import threading
 import urllib.parse
+import urllib.request
 
 import sabnzbd
 from sabnzbd.constants import RSS_FILE_NAME, DEFAULT_PRIORITY, DUP_PRIORITY
@@ -206,7 +207,8 @@ class RSSReader:
                 uri = uri.replace(" ", "%20").replace("feed://", "http://")
                 logging.debug("Running feedparser on %s", uri)
                 try:
-                    feed_parsed = feedparser.parse(uri)
+                    with urllib.request.urlopen(uri, timeout=10) as response:
+                        feed_parsed = feedparser.parse(response.read())
                 except Exception as feedparser_exc:
                     # Feedparser 5 would catch all errors, while 6 just throws them back at us
                     feed_parsed["bozo_exception"] = feedparser_exc
