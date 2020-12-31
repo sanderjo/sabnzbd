@@ -207,7 +207,12 @@ class RSSReader:
                 uri = uri.replace(" ", "%20").replace("feed://", "http://")
                 logging.debug("Running feedparser on %s", uri)
                 try:
-                    with urllib.request.urlopen(uri, timeout=10) as response:
+                    req = urllib.request.Request(
+                        uri,
+                        data=None,
+                        headers={'User-Agent': "SABnzbd/%s" % sabnzbd.__version__ }
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as response:
                         feed_parsed = feedparser.parse(response.read())
                 except Exception as feedparser_exc:
                     # Feedparser 5 would catch all errors, while 6 just throws them back at us
