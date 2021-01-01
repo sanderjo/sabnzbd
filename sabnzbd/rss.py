@@ -31,7 +31,7 @@ from sabnzbd.constants import RSS_FILE_NAME, DEFAULT_PRIORITY, DUP_PRIORITY
 from sabnzbd.decorators import synchronized
 import sabnzbd.config as config
 import sabnzbd.cfg as cfg
-from sabnzbd.misc import cat_convert, wildcard_to_re, cat_to_opts, match_str, from_units, int_conv, get_base_url, get_from_url, get_from_url_pure
+from sabnzbd.misc import cat_convert, wildcard_to_re, cat_to_opts, match_str, from_units, int_conv, get_base_url, get_from_url
 import sabnzbd.emailer as emailer
 
 import feedparser
@@ -206,7 +206,7 @@ class RSSReader:
                 uri = uri.replace(" ", "%20").replace("feed://", "http://")
                 logging.debug("Running feedparser on %s", uri)
                 try:
-                    feed_parsed = feedparser.parse(get_from_url(uri, ubtou = False))
+                    feed_parsed = feedparser.parse(get_from_url(uri, ubtou = True))
                 except Exception as feedparser_exc:
                     # Feedparser 5 would catch all errors, while 6 just throws them back at us
                     feed_parsed["bozo_exception"] = feedparser_exc
