@@ -335,13 +335,17 @@ def set_serv_parms(service, args):
     return True
 
 
-def get_from_url(url: str) -> Optional[str]:
-    """ Retrieve URL and return content """
+def get_from_url(url: str, **kwargs) -> Optional[str]:
+    """ Retrieve URL and return content. Optional parameter: ubtou = False (boolean) """
     try:
         req = urllib.request.Request(url)
         req.add_header("User-Agent", "SABnzbd/%s" % sabnzbd.__version__)
         with urllib.request.urlopen(req, timeout=10) as response:
-            return ubtou(response.read())
+            result = response.read()
+            if kwargs.get('ubtou', True):
+                return ubtou(result)
+            else:
+                return result
     except:
         return None
 
