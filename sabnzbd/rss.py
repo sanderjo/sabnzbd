@@ -25,7 +25,6 @@ import time
 import datetime
 import threading
 import urllib.parse
-import urllib.request
 
 import sabnzbd
 from sabnzbd.constants import RSS_FILE_NAME, DEFAULT_PRIORITY, DUP_PRIORITY
