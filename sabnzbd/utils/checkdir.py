@@ -103,6 +103,34 @@ def isFAT(check_dir):
     return FAT
 
 
+def is_writable(check_dir: str) -> bool:
+    """checks if check_dir is writable. Returns boolean"""
+
+    if not os.path.isdir(check_dir):
+        return False
+
+    file_to_write = os.path.join(check_dir, "sab-testing123.bla")
+    if os.path.exists(file_to_write):
+        try:
+            os.remove(file_to_write)
+        except:
+            return False
+
+    try:
+        with open(file_to_write, "w") as f:
+            f.write("testing 123 testing 123")
+    except:
+        return False
+
+    try:
+        os.remove(file_to_write)
+    except:
+        return False
+
+    # all good
+    return True
+
+
 if __name__ == "__main__":
     if debug:
         print((sys.platform))
