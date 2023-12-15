@@ -127,7 +127,7 @@ def publicipv4():
         selftest_ipv4 = item[4][0]
         try:
             # put the selftest_host's IPv4 address into the URL
-            req = urllib.request.Request("http://" + selftest_ipv4 + "/")
+            req = urllib.request.Request("http://" + selftest_ipv4 + "/?ipv4test")
             # specify the User-Agent, because certain sites refuse connections with "python urllib2" as User-Agent:
             req.add_header("User-Agent", "SABnzbd/%s" % sabnzbd.__version__)
             # specify the Host, because we only provide the IPv4 address in the URL:
@@ -153,7 +153,79 @@ def publicipv4():
     return public_ipv4
 
 
-def ipv6():
+def publicipv6():
+    """We force-connect over IPv6 to sabnzbd.cfg.selftest_host() to disover our public IPv6 address
+    """
+
+    import requests
+    # force-connect via IPv6 address
+    testhost = sabnzbd.cfg.selftest_host()
+    testbaseURL = "/"
+    try:
+        testhostipv6 = socket.getaddrinfo(testhost, 443, family=socket.AF_INET6, proto=socket.IPPROTO_TCP)[0][4][0] # First ipv6 address of testhost
+        r = requests.get(f"http://[{testhostipv6}]{testbaseURL}?ipv6test", headers={'host': testhost}) # http, not https
+        public_ipv6 = r.content.decode('utf-8').strip()
+        socket.inet_pton(socket.AF_INET6, public_ipv6) # check if it converts from string to an IPv6 address
+        return public_ipv6
+    except:
+        return None
+
+
+    start = time.time()
+    try:
+        # look up IPv4 addresses of selftest_host
+        lookup_result_ipv6 = addresslookup6(sabnzbd.cfg.selftest_host())
+
+        # Make sure there is a result, abort otherwise
+        if not lookup_result_ipv6:
+            raise Exception
+    except Exception:
+        # something very bad: no name resolving of selftest_host
+        logging.debug("Failed to detect public IPv6 address: looking up %s failed", sabnzbd.cfg.selftest_host())
+        return None
+
+    public_ipv6 = None
+
+
+
+
+    # we got one or more IPv6 address(es) for selftest_host, so let's connect and ask for our own public IPv4
+    for item in lookup_result_ipv6:
+        # get next IPv6 address of sabnzbd.cfg.selftest_host()
+        selftest_ipv6 = item[4][0]
+        try:
+            # put the selftest_host's IPv6 address into the URL, with square brackets
+            req = urllib.request.Request("http://[" + selftest_ipv6 + "]/?ipv6test")
+            # specify the User-Agent, because certain sites refuse connections with "python urllib2" as User-Agent:
+            req.add_header("User-Agent", "SABnzbd/%s" % sabnzbd.__version__)
+            # specify the Host, because we only provide the IPv6 address in the URL:
+            req.add_header("Host", sabnzbd.cfg.selftest_host())
+            # get the response, timeout 2 seconds, in case the website is not accessible
+            public_ipv6 = ubtou(urllib.request.urlopen(req, timeout=2).read())
+            # ... check the response is indeed an IPv6 address:
+            # if we got anything else than a plain IPv6 address, this will raise an exception
+            #socket.inet_aton(public_ipv6)
+            socket.inet_pton(socket.AF_INET6, public_ipv6)  # check if it converts from string to an IPv6 address
+
+            # if we get here without exception, we found our public IPv6, and we're done:
+            break
+        except (socket.error, urllib.error.URLError):
+            # the connect OR the inet_aton raised an exception, so:
+            public_ipv6 = None  # reset
+            # continue the for loop to try next server IPv6 address
+            pass
+
+    if not public_ipv6:
+        logging.debug("Failed to get public IPv6 address from %s", sabnzbd.cfg.selftest_host())
+        return None
+
+    logging.debug("Public IPv6 address = %s (in %.2f seconds)", public_ipv6, time.time() - start)
+    return public_ipv6
+
+def ipv6LAN():
+    '''
+    Finds public IPv6 on local LAN interface. That does not proof if IPv6 is working to outside world
+    '''
     try:
         with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s_ipv6:
             # IPv6 prefix for documentation purpose

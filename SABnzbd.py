@@ -104,7 +104,7 @@ import sabnzbd.config as config
 import sabnzbd.cfg
 import sabnzbd.notifier as notifier
 import sabnzbd.zconfig
-from sabnzbd.getipaddress import localipv4, publicipv4, ipv6, dnslookup
+from sabnzbd.getipaddress import localipv4, publicipv4, publicipv6, ipv6LAN, dnslookup
 from sabnzbd.utils.getperformance import getpystone, getcpu
 import sabnzbd.utils.ssdp as ssdp
 
@@ -1215,7 +1215,7 @@ def main():
         # List networking
         localipv4()
         publicipv4()
-        ipv6()
+        publicipv6()
         dnslookup()
 
         # Measure basic system performance measured by pystone and - if possible - CPU model
