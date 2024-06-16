@@ -301,14 +301,16 @@ def deobfuscate(nzo, filelist: List[str], usefulname: str):
     # Now find other files with the same basename in filelist, and rename them in the same way:
     basedirfile = get_basename(biggest_file)  # something like "/home/this/myiso"
     for otherfile in filelist:
-        if otherfile.startswith(basedirfile) and os.path.isfile(otherfile):
-            # yes, same basedirfile, only different ending
-            remaining_ending = otherfile.replace(basedirfile, "")  # might be long ext, like ".dut.srt" or "-sample.iso"
-            new_name = get_unique_filename("%s%s" % (os.path.join(path, usefulname), remaining_ending))
-            logging.info("Deobfuscate renaming %s to %s", otherfile, new_name)
-            # Rename and make sure the new filename is unique
-            renamer(otherfile, new_name)
-            nr_files_renamed += 1
+        # check it really exists
+        if os.path.isfile(otherfile):
+            if otherfile.startswith(basedirfile):
+                # yes, same basedirfile, only different ending
+                remaining_ending = otherfile.replace(basedirfile, "")  # might be long ext, like ".dut.srt" or "-sample.iso"
+                new_name = get_unique_filename("%s%s" % (os.path.join(path, usefulname), remaining_ending))
+                logging.info("Deobfuscate renaming %s to %s", otherfile, new_name)
+                # Rename and make sure the new filename is unique
+                renamer(otherfile, new_name)
+                nr_files_renamed += 1
 
     if nr_files_renamed:
         nzo.set_unpack_info("Deobfuscate", T("Deobfuscate renamed %d file(s)") % nr_files_renamed)
