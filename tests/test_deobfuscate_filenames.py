@@ -404,3 +404,41 @@ class TestDeobfuscateFinalResult:
         assert not os.path.isfile(os.path.join(work_dir, "twentymb.bin"))  # should now be gone
 
         shutil.rmtree(work_dir)
+
+    def test_deobfuscate_big_file_small_unrelated_srt_files(self):
+        # input: myiso.iso, with accompanying files (.srt and -sample files)
+        # test that the accompanying files (with same basename) are renamed accordingly to the big ISO
+        # Note: this is the most typical usage of deobfuscation
+
+        # Create directory (with a random directory name)
+        dirname = os.path.join(SAB_CACHE_DIR, "testdir" + str(random.randint(10000, 99999)))
+        os.mkdir(dirname)
+
+        # Create a big enough file with a useless filename
+        isofile = os.path.join(dirname, "myiso.iso")
+        create_big_file(isofile)
+        assert os.path.isfile(isofile)
+
+        # and a srt file with unrelated filename
+        srtfile = os.path.join(dirname, "dut.srt")
+        create_small_file(srtfile)
+        assert os.path.isfile(srtfile)
+
+
+        # create the filelist, with just the above files
+        myfilelist = [isofile, srtfile]
+
+        # and now unleash the magic on that filelist, with a more useful jobname:
+        jobname = "My Important Download 2020"
+        self.deobfuscate_wrapper(myfilelist, jobname)
+
+        # Check original files:
+        assert not os.path.isfile(isofile)  # original iso not be there anymore
+        assert not os.path.isfile(srtfile)  # ... and accompanying file neither
+
+        # Check the renaming
+        assert os.path.isfile(os.path.join(dirname, jobname + ".iso"))  # ... should be renamed to the jobname
+        assert os.path.isfile(os.path.join(dirname, jobname + "dut.srt"))  # ... should be renamed to the jobname
+
+        # Done. Remove (non-empty) directory
+        #shutil.rmtree(dirname)

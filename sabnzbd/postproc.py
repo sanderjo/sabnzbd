@@ -584,6 +584,20 @@ def process_job(nzo: NzbObject) -> bool:
                     logging.info("Running deobfuscate")
                     deobfuscate.deobfuscate(nzo, newfiles, nzo.final_name)
 
+
+                    # And now: handle of the filenames of subtitle files
+                    # 'newfiles' now probably contains invalid filenames because files got renamed
+                    # we can only trust: workdir_complete. So get fresh files list from there
+                    currentfiles = []
+                    for root, dirs, files in os.walk(os.path.abspath(workdir_complete)):
+                        for file in files:
+                            fullpath = os.path.join(root, file)
+                            if os.path.isfile(fullpath):
+                                currentfiles.append(fullpath)
+                    # Now do it
+                    deobfuscate.subtitles_deobfuscate(nzo, currentfiles, nzo.final_name)
+
+
                 # Run the user script
                 if script_path := make_script_path(script):
                     # Set the current nzo status to "Ext Script...". Used in History

@@ -183,6 +183,54 @@ def first_file_is_much_bigger(filelist):
         return True
 
 
+def subtitles_deobfuscate(nzo, filelist: List[str], usefulname: str):
+    """
+    rename subtitles files according to biggest file
+
+    Input:
+    Big_Buck_Bunny.mp4 # biggest file
+    13_Dutch.srt
+    somesubdir/somelang.srt # what to do?
+
+    Result:
+    Big_Buck_Bunny.mp4
+    Big_Buck_Bunny.13_Dutch.srt
+
+    """
+
+    # Find biggest file,
+
+    # We pick the biggest file ... probably the most important file
+    # so sort filelist on size:
+    filelist = sorted(filelist, key=os.path.getsize, reverse=True)
+    if filelist:
+        biggest_file = filelist[0]
+    else:
+        biggest_file = None
+
+    # Find all subtitle files, and if starting with different name: rename
+
+    # handle .SRT files that do NOT start with the same basename (but are in the same dir?)
+
+    basedir = os.path.dirname(basedirfile)  # we only consider files in the same directory
+    for otherfile in filelist:
+        if os.path.splitext(otherfile)[1].lower() in ['.srt'] and \
+                os.path.isfile(otherfile) and \
+                not otherfile.startswith(basedirfile) and \
+                os.path.dirname(otherfile) == basedir:
+            # something like Dutch.srt, or 13_Dutch.srt, or dut.srt
+            # we prepend the basename, to get /some/dir/My_Linux_Instruction_Video.dut.srt
+            purefilename = os.path.split(otherfile)[1]
+            logging.info("SJ: Deobfuscate SRT")
+            combined_name = basedirfile + "." + purefilename  # just concatenate
+            new_name = get_unique_filename(combined_name)
+            logging.info("Deobfuscate renaming SRT %s to %s", otherfile, new_name)
+            # Rename and make sure the new filename is unique
+            renamer(otherfile, new_name)
+            nr_files_renamed += 1
+
+
+
 def deobfuscate(nzo, filelist: List[str], usefulname: str):
     """
     For files in filelist:
@@ -301,16 +349,18 @@ def deobfuscate(nzo, filelist: List[str], usefulname: str):
     # Now find other files with the same basename in filelist, and rename them in the same way:
     basedirfile = get_basename(biggest_file)  # something like "/home/this/myiso"
     for otherfile in filelist:
-        # check it really exists
-        if os.path.isfile(otherfile):
-            if otherfile.startswith(basedirfile):
-                # yes, same basedirfile, only different ending
-                remaining_ending = otherfile.replace(basedirfile, "")  # might be long ext, like ".dut.srt" or "-sample.iso"
-                new_name = get_unique_filename("%s%s" % (os.path.join(path, usefulname), remaining_ending))
-                logging.info("Deobfuscate renaming %s to %s", otherfile, new_name)
-                # Rename and make sure the new filename is unique
-                renamer(otherfile, new_name)
-                nr_files_renamed += 1
+        if otherfile.startswith(basedirfile) and os.path.isfile(otherfile):
+            # yes, same basedirfile, only different ending
+            remaining_ending = otherfile.replace(
+                basedirfile, ""
+            )  # might be long ext, like ".dut.srt" or "-sample.iso"
+            new_name = get_unique_filename("%s%s" % (os.path.join(path, usefulname), remaining_ending))
+            logging.info("Deobfuscate renaming %s to %s", otherfile, new_name)
+            # Rename and make sure the new filename is unique
+            renamer(otherfile, new_name)
+            nr_files_renamed += 1
+
+
 
     if nr_files_renamed:
         nzo.set_unpack_info("Deobfuscate", T("Deobfuscate renamed %d file(s)") % nr_files_renamed)
