@@ -27,7 +27,6 @@ from importlib import reload
 
 
 class TestNotifier(TestCase):
-
     @classmethod
     def setUpClass(self):
         # hack since test_misc uses @set_config decorator eliminating all of the default configuration
